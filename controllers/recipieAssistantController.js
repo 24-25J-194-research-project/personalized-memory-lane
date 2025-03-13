@@ -12,18 +12,27 @@ export const createRecipe = async (req, res) => {
   const { username, recipeName } = req.body;
 
   try {
-    // ✅ New structured prompt
     // const response = await openai.chat.completions.create({
     //   model: "gpt-3.5-turbo",
     //   messages: [
     //     {
     //       role: "system",
     //       content: `You are a recipe assistant. Generate ingredients and steps for the following recipe: ${recipeName}.
-    //                   Return the response in JSON format:
-    //                   {
-    //                     "ingredients": ["ingredient 1", "ingredient 2", ...],
-    //                     "steps": ["step 1", "step 2", ...]
-    //                   }`,
+    //                 Identify any time-related steps and include them as "time" in the JSON.
+    //                 Return the response in JSON format:
+    //                 {
+    //                   "ingredients": ["ingredient 1", "ingredient 2", ...],
+    //                   "steps": [
+    //                     {
+    //                       "step": "step 1",
+    //                       "time": "10 mins" // If applicable, otherwise null
+    //                     },
+    //                     {
+    //                       "step": "step 2",
+    //                       "time": null
+    //                     }
+    //                   ]
+    //                 }`,
     //     },
     //   ],
     //   temperature: 0.7,
@@ -36,17 +45,20 @@ export const createRecipe = async (req, res) => {
           role: "system",
           content: `You are a recipe assistant. Generate ingredients and steps for the following recipe: ${recipeName}. 
                     Identify any time-related steps and include them as "time" in the JSON.
+                    Also create an "image_prompt" for each step that can be used to generate an image.
                     Return the response in JSON format:
                     {
                       "ingredients": ["ingredient 1", "ingredient 2", ...],
                       "steps": [
                         {
                           "step": "step 1",
-                          "time": "10 mins" // If applicable, otherwise null
+                          "time": "10 mins", // If applicable, otherwise null
+                          "image_prompt": "chopped onions in a pan"
                         },
                         {
                           "step": "step 2",
-                          "time": null
+                          "time": null,
+                          "image_prompt": "boiling water"
                         }
                       ]
                     }`,
@@ -57,6 +69,19 @@ export const createRecipe = async (req, res) => {
 
     // ✅ Parse the JSON response from OpenAI
     const result = JSON.parse(response.choices[0].message.content);
+
+    // ✅ Generate images using DALL-E
+    for (const step of result.steps) {
+      if (step.image_prompt) {
+        const imageResponse = await openai.images.generate({
+          model: "dall-e-2",
+          prompt: step.image_prompt,
+          n: 1,
+          size: "512x512",
+        });
+        step.image = imageResponse.data[0].url;
+      }
+    }
 
     // ✅ Save to MongoDB
     const newRecipe = await Recipe.create({
