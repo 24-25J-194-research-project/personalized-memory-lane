@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
   healthConditions: { type: String, default: "" },
   emergencyContactName: { type: String },
   emergencyContactEmail: { type: String },
+  name: { type: String },
+  location: { type: String },
 });
 
 const User = mongoose.model("User", userSchema);

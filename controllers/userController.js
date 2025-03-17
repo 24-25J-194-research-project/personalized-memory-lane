@@ -7,12 +7,20 @@ export const updateHealthConditions = async (req, res) => {
     healthConditions,
     emergencyContactName,
     emergencyContactEmail,
+    name,
+    location,
   } = req.body;
 
   try {
     const user = await User.findOneAndUpdate(
       { username },
-      { healthConditions, emergencyContactName, emergencyContactEmail },
+      {
+        healthConditions,
+        emergencyContactName,
+        emergencyContactEmail,
+        name,
+        location,
+      },
       { new: true, upsert: true }
     );
     res.status(200).json({ message: "Health conditions updated", user });
@@ -33,6 +41,8 @@ export const getHealthConditions = async (req, res) => {
       healthConditions: user.healthConditions,
       emergencyContactName: user.emergencyContactName,
       emergencyContactEmail: user.emergencyContactEmail,
+      name: user.name,
+      location: user.location,
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to get health conditions" });

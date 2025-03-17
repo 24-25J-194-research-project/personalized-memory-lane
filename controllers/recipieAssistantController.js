@@ -73,6 +73,7 @@ export const createRecipe = async (req, res) => {
     // ✅ Generate images using DALL-E
     for (const step of result.steps) {
       if (step.image_prompt) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         const imageResponse = await openai.images.generate({
           model: "dall-e-2",
           prompt: step.image_prompt,
