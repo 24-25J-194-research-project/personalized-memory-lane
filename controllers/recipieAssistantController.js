@@ -1,6 +1,7 @@
 import OpenAi from "openai";
 import dotenv from "dotenv";
 import Recipe from "../models/recipieModel.js";
+import User from "../models/userModel.js";
 
 dotenv.config();
 
@@ -10,58 +11,58 @@ const openai = new OpenAi({
 
 export const createRecipe = async (req, res) => {
   const { username, recipeName } = req.body;
+  const userData = User.findOne({ username });
+  const healthConditions =
+    userData?.healthConditions || "No specific health considerations.";
 
   try {
-    // const response = await openai.chat.completions.create({
-    //   model: "gpt-3.5-turbo",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content: `You are a recipe assistant. Generate ingredients and steps for the following recipe: ${recipeName}.
-    //                 Identify any time-related steps and include them as "time" in the JSON.
-    //                 Return the response in JSON format:
-    //                 {
-    //                   "ingredients": ["ingredient 1", "ingredient 2", ...],
-    //                   "steps": [
-    //                     {
-    //                       "step": "step 1",
-    //                       "time": "10 mins" // If applicable, otherwise null
-    //                     },
-    //                     {
-    //                       "step": "step 2",
-    //                       "time": null
-    //                     }
-    //                   ]
-    //                 }`,
-    //     },
-    //   ],
-    //   temperature: 0.7,
-    // });
-
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: `You are a recipe assistant. Generate ingredients and steps for the following recipe: ${recipeName}. 
-                    Identify any time-related steps and include them as "time" in the JSON.
-                    Also create an "image_prompt" for each step that can be used to generate an image.
-                    Return the response in JSON format:
-                    {
-                      "ingredients": ["ingredient 1", "ingredient 2", ...],
-                      "steps": [
-                        {
-                          "step": "step 1",
-                          "time": "10 mins", // If applicable, otherwise null
-                          "image_prompt": "chopped onions in a pan"
-                        },
-                        {
-                          "step": "step 2",
-                          "time": null,
-                          "image_prompt": "boiling water"
-                        }
-                      ]
-                    }`,
+          // content: `You are a recipe assistant. Generate ingredients and steps for the following recipe: ${recipeName}.
+          //           Identify any time-related steps and include them as "time" in the JSON.
+          //           Also create an "image_prompt" for each step that can be used to generate an image.
+          //           Return the response in JSON format:
+          //           {
+          //             "ingredients": ["ingredient 1", "ingredient 2", ...],
+          //             "steps": [
+          //               {
+          //                 "step": "step 1",
+          //                 "time": "10 mins", // If applicable, otherwise null
+          //                 "image_prompt": "chopped onions in a pan"
+          //               },
+          //               {
+          //                 "step": "step 2",
+          //                 "time": null,
+          //                 "image_prompt": "boiling water"
+          //               }
+          //             ]
+          //           }`,
+          content: `You are a recipe assistant.You must consider user's health conditions.
+          The user has : ${healthConditions}.
+          Generate ingredients and steps for the following recipe: ${recipeName}. 
+          Identify any time-related steps and include them as "time" in the JSON.
+          Also create an "image_prompt" for each step that can be used to generate an image.
+          Estimate the rough total time to complete the recipe and include it as "roughTime".
+          Return the response in JSON format:
+          {
+            "ingredients": ["ingredient 1", "ingredient 2", ...],
+            "steps": [
+              {
+                "step": "step 1",
+                "time": "10 mins", // If applicable, otherwise null
+                "image_prompt": "chopped onions in a pan"
+              },
+              {
+                "step": "step 2",
+                "time": null,
+                "image_prompt": "boiling water"
+              }
+            ],
+            "roughTime": "30 mins" 
+          }`,
         },
       ],
       temperature: 0.7,
@@ -90,6 +91,7 @@ export const createRecipe = async (req, res) => {
       name: recipeName,
       ingredients: result.ingredients,
       steps: result.steps,
+      roughTime: result.roughTime,
     });
 
     res.status(201).json(newRecipe);
