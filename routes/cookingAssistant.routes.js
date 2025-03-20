@@ -13,6 +13,11 @@ import {
   getRecipes,
   deleteRecipe,
 } from "../controllers/recipieAssistantController.js";
+import {
+  createCompanion,
+  interactWithCompanion,
+  getCompanionHistory,
+} from "../controllers/virtualCompanionController.js";
 
 const router = express.Router();
 
@@ -27,5 +32,9 @@ router.get("/user/health-conditions", getHealthConditions);
 router.post("/create-recipe", createRecipe);
 router.get("/get-recipes", getRecipes);
 router.delete("/delete-recipe/:id", deleteRecipe);
+
+router.post("/create-companion", createCompanion);
+router.post("/interact-companion", interactWithCompanion);
+router.get("/companion-history", getCompanionHistory);
 
 export default router;
