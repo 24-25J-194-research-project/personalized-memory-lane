@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import Companion from "../models/companionModel.js";
 import User from "../models/userModel.js";
 import sendEmergencyEmail from "../utils/notificationService.js";
+import axios from "axios";
 
 dotenv.config();
 
@@ -103,26 +104,38 @@ export const interactWithCompanion = async (req, res) => {
     const assistantReply = response.choices[0].message.content;
 
     // ✅ Detect Self-Harm Thoughts
-    if (
-      /kill myself|harm myself|hurt myself|end my life|suicide/i.test(
-        userMessage
-      )
-    ) {
-      console.log("⚠️ Self-harm detected!");
-
-      if (emergencyContactEmail) {
-        sendEmergencyEmail(
-          emergencyContactEmail,
-          "Emergency Alert - Self-Harm Detected",
-          `⚠️ The user has expressed thoughts of self-harm. Please contact them immediately.`
-        );
+    // if (
+    //   /kill myself|harm myself|hurt myself|end my life|suicide/i.test(
+    //     userMessage
+    //   )
+    // ) {
+    console.log("⚠️ Self-harm detected!");
+    // n8n webhook
+    const eventID = Math.floor(Math.random() * 100000);
+    await axios.post(
+      "https://derek666.app.n8n.cloud/webhook-test/sos", // test env
+      // "https://derek666.app.n8n.cloud/webhook/food-tracker", // for prod
+      {
+        EventID: eventID,
+        emergencyContactEmail,
+        emergencyContactName,
+        date: new Date().toISOString(),
+        userMessage,
       }
+    );
+    // if (emergencyContactEmail) {
+    //   sendEmergencyEmail(
+    //     emergencyContactEmail,
+    //     "Emergency Alert - Self-Harm Detected",
+    //     `⚠️ The user has expressed thoughts of self-harm. Please contact them immediately.`
+    //   );
+    // }
 
-      return res.json({
-        reply:
-          "I'm really concerned about what you just said. Please reach out to someone you trust or a professional for help.",
-      });
-    }
+    //   return res.json({
+    //     reply:
+    //       "I'm really concerned about what you just said. Please reach out to someone you trust or a professional for help.",
+    //   });
+    // }
 
     // ✅ Cheer Up User if They are Sad
     if (/sad|depressed|lonely|hopeless/i.test(userMessage)) {

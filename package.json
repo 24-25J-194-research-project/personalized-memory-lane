@@ -10,6 +10,7 @@
     "agentkeepalive": "^4.5.0",
     "array-flatten": "^1.1.1",
     "asynckit": "^0.4.0",
+    "axios": "^1.9.0",
     "body-parser": "^1.20.3",
     "bytes": "^3.1.2",
     "call-bind": "^1.0.7",

@@ -2,6 +2,7 @@ import OpenAi from "openai";
 import dotenv from "dotenv";
 import Recipe from "../models/recipieModel.js";
 import User from "../models/userModel.js";
+import axios from "axios";
 
 dotenv.config();
 
@@ -11,7 +12,7 @@ const openai = new OpenAi({
 
 export const createRecipe = async (req, res) => {
   const { username, recipeName } = req.body;
-  const userData = User.findOne({ username });
+  const userData = await User.findOne({ username });
   const healthConditions =
     userData?.healthConditions || "No specific health considerations.";
 
@@ -72,18 +73,18 @@ export const createRecipe = async (req, res) => {
     const result = JSON.parse(response.choices[0].message.content);
 
     // ✅ Generate images using DALL-E
-    for (const step of result.steps) {
-      if (step.image_prompt) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const imageResponse = await openai.images.generate({
-          model: "dall-e-2",
-          prompt: step.image_prompt,
-          n: 1,
-          size: "512x512",
-        });
-        step.image = imageResponse.data[0].url;
-      }
-    }
+    // for (const step of result.steps) {
+    //   if (step.image_prompt) {
+    //     await new Promise((resolve) => setTimeout(resolve, 1000));
+    //     const imageResponse = await openai.images.generate({
+    //       model: "dall-e-2",
+    //       prompt: step.image_prompt,
+    //       n: 1,
+    //       size: "512x512",
+    //     });
+    //     step.image = imageResponse.data[0].url;
+    //   }
+    // }
 
     // ✅ Save to MongoDB
     const newRecipe = await Recipe.create({
@@ -95,6 +96,30 @@ export const createRecipe = async (req, res) => {
     });
 
     res.status(201).json(newRecipe);
+
+    // n8n webhook
+    const recipeId = Math.floor(Math.random() * 100000);
+    const formattedDate = new Date().toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+
+    await axios.post(
+      "https://derek666.app.n8n.cloud/webhook-test/food-tracker", // test env
+      // "https://derek666.app.n8n.cloud/webhook/food-tracker", // for prod
+      {
+        ID: recipeId,
+        recipeName,
+        date: formattedDate,
+        name: userData.name,
+      }
+      // {
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     Authorization: "1234",
+      //   },
+      // }
+    );
   } catch (error) {
     console.error("Error creating recipe:", error.message);
     res.status(500).json({ error: "Failed to create recipe" });
